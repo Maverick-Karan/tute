@@ -9,7 +9,9 @@ load_dotenv()
 # get the environment variables
 mongo_uri = os.getenv('MONGO_URI')
 db_name = os.getenv('MONGO_DB_NAME')
-collection_name = os.getenv('MONGO_COLLECTION_NAME')
+#collection_name = os.getenv('MONGO_COLLECTION_NAME')
+users_collection_name = os.getenv('MONGO_USERS_COLLECTION')
+todos_collection_name = os.getenv('MONGO_TODOS_COLLECTION')
 
 # Initialize Flask app with custom template folder path
 app = Flask(__name__, template_folder='../frontend')
@@ -31,7 +33,9 @@ def get_data():
 # MongoDB connection setup using the MONGO_URL environment variable
 client = MongoClient(mongo_uri)
 db = client[db_name]
-collection = db[collection_name]
+#collection = db[collection_name]
+users_collection = db[users_collection_name]
+todos_collection = db[todos_collection_name]
 
 
 # Route to render the form page
@@ -51,7 +55,7 @@ def submit():
         return render_template('index.html', error="Both name and age are required!")
     
     # Insert the data into MongoDB (regardless of type)
-    collection.insert_one({'name': name, 'age': age})
+    users_collection.insert_one({'name': name, 'age': age})
     
     # Redirect to the success page after successful submission
     return redirect(url_for('success'))
@@ -60,6 +64,25 @@ def submit():
 @app.route('/success')
 def success():
     return render_template('success.html')
+
+
+
+# Route to handle todo item submission
+@app.route('/submittodoitem', methods=['POST'])
+def submit_todo_item():
+    item_name = request.form.get('itemName')
+    item_description = request.form.get('itemDescription')
+
+    if not item_name or not item_description:
+        return render_template('todo.html', error="Both item name and description are required!")
+
+    todos_collection.insert_one({
+        'itemName': item_name,
+        'itemDescription': item_description
+    })
+
+    return "<h2>To-Do submitted successfully!</h2>"
+
 
 
 
