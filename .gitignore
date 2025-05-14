@@ -1,0 +1,13 @@
+# Ignore virtual environment inside flask/
+flask/.venv/
+
+# Ignore environment variable file inside backend/
+flask/backend/.env
+
+# General Python ignores
+__pycache__/
+*.py[cod]
+*.sqlite3
+env/
+venv/
+.venv/
