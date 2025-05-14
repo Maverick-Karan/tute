@@ -65,6 +65,9 @@ def submit():
 def success():
     return render_template('success.html')
 
+@app.route('/todo')
+def todo():
+    return render_template('todo.html')
 
 
 # Route to handle todo item submission
