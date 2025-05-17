@@ -1,93 +1,50 @@
 import os
-from flask import Flask, jsonify, request, render_template, redirect, url_for
-import json
+from flask import Flask, jsonify, request
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# get the environment variables
+# Get environment variables
 mongo_uri = os.getenv('MONGO_URI')
 db_name = os.getenv('MONGO_DB_NAME')
-#collection_name = os.getenv('MONGO_COLLECTION_NAME')
 users_collection_name = os.getenv('MONGO_USERS_COLLECTION')
 todos_collection_name = os.getenv('MONGO_TODOS_COLLECTION')
 
-# Initialize Flask app with custom template folder path
-app = Flask(__name__, template_folder='../frontend')
+# Initialize Flask app
+backend_app = Flask(__name__)
 
-########################################################
-# Get the absolute path to data.json
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE = os.path.join(BASE_DIR, 'data.json')
-
-@app.route('/api')
-def get_data():
-    with open(DATA_FILE) as f:
-        return jsonify(json.load(f))
-    
-
-########################################################
-# MongoDB Connection
-########################################################
-# MongoDB connection setup using the MONGO_URL environment variable
+# MongoDB connection setup
 client = MongoClient(mongo_uri)
 db = client[db_name]
-#collection = db[collection_name]
 users_collection = db[users_collection_name]
 todos_collection = db[todos_collection_name]
 
+# Route to handle user data submission
+@backend_app.route('/submit', methods=['POST'])
+def submit_user_data():
+    data = request.get_json()
+    name = data.get('name')
+    age = data.get('age')
 
-# Route to render the form page
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# Route to handle form submission
-@app.route('/submit', methods=['POST'])
-def submit():
-    # Get form data
-    name = request.form.get('name')
-    age = request.form.get('age')
-
-    # Check if both fields are provided
     if not name or not age:
-        return render_template('index.html', error="Both name and age are required!")
-    
-    # Insert the data into MongoDB (regardless of type)
+        return jsonify({'error': 'Both name and age are required!'}), 400
+
     users_collection.insert_one({'name': name, 'age': age})
-    
-    # Redirect to the success page after successful submission
-    return redirect(url_for('success'))
-
-# Route to render success page
-@app.route('/success')
-def success():
-    return render_template('success.html')
-
-@app.route('/todo')
-def todo():
-    return render_template('todo.html')
-
+    return jsonify({'message': 'Data submitted successfully!'}), 200
 
 # Route to handle todo item submission
-@app.route('/submittodoitem', methods=['POST'])
+@backend_app.route('/submittodoitem', methods=['POST'])
 def submit_todo_item():
-    item_name = request.form.get('itemName')
-    item_description = request.form.get('itemDescription')
+    data = request.get_json()
+    item_name = data.get('itemName')
+    item_description = data.get('itemDescription')
 
     if not item_name or not item_description:
-        return render_template('todo.html', error="Both item name and description are required!")
+        return jsonify({'error': 'Both item name and description are required!'}), 400
 
-    todos_collection.insert_one({
-        'itemName': item_name,
-        'itemDescription': item_description
-    })
-
-    return "<h2>To-Do submitted successfully!</h2>"
-
-
-
+    todos_collection.insert_one({'itemName': item_name, 'itemDescription': item_description})
+    return jsonify({'message': 'To-Do item added successfully!'}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    backend_app.run(debug=True, port=3000)
