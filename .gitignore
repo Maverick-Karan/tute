@@ -4,6 +4,8 @@ flask/.venv/
 # Ignore environment variable file inside backend/
 flask/backend/.env
 
+backend/.env
+
 # General Python ignores
 __pycache__/
 *.py[cod]
